@@ -33,28 +33,28 @@ exports.sendNotification = functions.firestore
             .get()
             .then((doc) => {
                 let data = doc.data().followers.toString();
-                console.log('#################################', data);
                 let list = data.split(',');
                 let followerList = list.filter((item)=>{
                     return item !=='start';
                 });
-                console.log('----------------------', followerList.length);
                 return followerList.forEach(function(follower) {
-                    console.log("###########" + follower);
                     return db.collection('users/')
                         .doc(follower)
                         .get()
                         .then((userData) => {
+                            console.log('>>>>>>>>>>>>>>>>>>>>', userData.data().token.toString());
                             registrationToken.push(userData.data().token.toString());
-                            return admin.messaging().sendToDevice(registrationToken, this.payload)
+                            console.log('--------------------', registrationToken.length);
+                            return admin.messaging().sendToDevice(registrationToken, payload)
                                 .then(function(response) {
+                                    console.log('###########'+response.results);
                                     const stillRegisteredTokens = registrationToken
                                     return response.results.forEach((result, index) => {
-                                        console.log('==============' + result);
+                                        console.log('==============' + result.messageId.toString());
                                         const error = result.error
                                         if (error) {
-                                            const failedRegistrationToken = registrationToken[index]
-                                            console.error('blah', failedRegistrationToken, error)
+                                            const failedRegistrationToken = registrationToken[index];
+                                            console.error('blah', failedRegistrationToken, error);
                                             if (error.code === 'messaging/invalid-registration-token'
                                                 || error.code === 'messaging/registration-token-not-registered') {
                                                 const failedIndex = stillRegisteredTokens.indexOf(failedRegistrationToken)
