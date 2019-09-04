@@ -2,6 +2,9 @@ const functions = require('firebase-functions');
 const admin = require('firebase-admin');
 const Firestore = require('@google-cloud/firestore');
 const PROJECTID = 'good-recipes';
+admin.initializeApp(functions.config().firebase);
+
+const db = admin.firestore();
 const firestore = new Firestore({
     projectId: PROJECTID
 });
@@ -11,38 +14,43 @@ let recipeTitle = "";
 let recipeDescription = "";
 let registrationToken = [];
 let payload;
-admin.initializeApp(functions.config().firebase);
+
 
 exports.sendNotification = functions.firestore
     .document('recipe/{recipe}')
-    .onCreate((docSnapshot) => {
+    .onCreate((docSnapshot,context) => {
         recipeAuthor = docSnapshot.data()['author'];
         recipeTitle = docSnapshot.data()['title'];
         recipeDescription = docSnapshot.data()['description'];
-        this.payload = {
+        payload = {
             notification: {
                 title: `${recipeTitle}`,
                 description: `${recipeDescription}`
             }
         };
-        return firestore.collection('users/')
+        return db.collection('users/')
             .doc(recipeAuthor.toString())
             .get()
-            .then(doc => {
-                let data = doc.data().followers;
-                let followerList = data.split(',');
-                return followerList.forEach((follower) => {
-                    console.log("###########"+follower);
-                    this.firestore.collection('users/')
-                        .doc(follower.toString())
+            .then((doc) => {
+                let data = doc.data().followers.toString();
+                console.log('#################################', data);
+                let list = data.split(',');
+                let followerList = list.filter((item)=>{
+                    return item !=='start';
+                });
+                console.log('----------------------', followerList.length);
+                return followerList.forEach(function(follower) {
+                    console.log("###########" + follower);
+                    return db.collection('users/')
+                        .doc(follower)
                         .get()
                         .then((userData) => {
                             registrationToken.push(userData.data().token.toString());
                             return admin.messaging().sendToDevice(registrationToken, this.payload)
-                                .then((response) => {
+                                .then(function(response) {
                                     const stillRegisteredTokens = registrationToken
                                     return response.results.forEach((result, index) => {
-                                        console.log('=============='+result);
+                                        console.log('==============' + result);
                                         const error = result.error
                                         if (error) {
                                             const failedRegistrationToken = registrationToken[index]
@@ -56,7 +64,6 @@ exports.sendNotification = functions.firestore
                                             }
                                         }
                                     });
-
                                 })
                                 .catch((error) => {
                                     return error;
