@@ -13,7 +13,7 @@ let registrationToken = [];
 let payload;
 admin.initializeApp(functions.config().firebase);
 
-exports.getAuthor = functions.firestore
+exports.sendNotification = functions.firestore
     .document('recipe/{recipe}')
     .onCreate((docSnapshot) => {
         recipeAuthor = docSnapshot.data()['author'];
@@ -25,13 +25,14 @@ exports.getAuthor = functions.firestore
                 description: `${recipeDescription}`
             }
         };
-        firestore.collection('users/')
+        return firestore.collection('users/')
             .doc(recipeAuthor.toString())
             .get()
             .then(doc => {
                 let data = doc.data().followers;
                 let followerList = data.split(',');
                 return followerList.forEach((follower) => {
+                    console.log("###########"+follower);
                     this.firestore.collection('users/')
                         .doc(follower.toString())
                         .get()
@@ -41,6 +42,7 @@ exports.getAuthor = functions.firestore
                                 .then((response) => {
                                     const stillRegisteredTokens = registrationToken
                                     return response.results.forEach((result, index) => {
+                                        console.log('=============='+result);
                                         const error = result.error
                                         if (error) {
                                             const failedRegistrationToken = registrationToken[index]
