@@ -23,7 +23,7 @@ exports.sendNotification = functions.firestore
         recipeTitle = docSnapshot.data()['title'];
         recipeDescription = docSnapshot.data()['description'];
         payload = {
-            notification: {
+            data: {
                 title: `${recipeTitle}`,
                 description: `${recipeDescription}`
             }
@@ -42,28 +42,11 @@ exports.sendNotification = functions.firestore
                         .doc(follower)
                         .get()
                         .then((userData) => {
-                            console.log('>>>>>>>>>>>>>>>>>>>>', userData.data().token.toString());
-                            registrationToken.push(userData.data().token.toString());
-                            console.log('--------------------', registrationToken.length);
+                            registrationToken.push(userData.data().token);
                             return admin.messaging().sendToDevice(registrationToken, payload)
-                                .then(function(response) {
-                                    console.log('###########'+response.results);
-                                    const stillRegisteredTokens = registrationToken
-                                    return response.results.forEach((result, index) => {
-                                        console.log('==============' + result.messageId.toString());
-                                        const error = result.error
-                                        if (error) {
-                                            const failedRegistrationToken = registrationToken[index];
-                                            console.error('blah', failedRegistrationToken, error);
-                                            if (error.code === 'messaging/invalid-registration-token'
-                                                || error.code === 'messaging/registration-token-not-registered') {
-                                                const failedIndex = stillRegisteredTokens.indexOf(failedRegistrationToken)
-                                                if (failedIndex > -1) {
-                                                    stillRegisteredTokens.splice(failedIndex, 1)
-                                                }
-                                            }
-                                        }
-                                    });
+                                .then((response) => {
+                                    console.log(response.results[0].error.toString());
+                                    return true;
                                 })
                                 .catch((error) => {
                                     return error;
