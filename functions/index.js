@@ -43,10 +43,12 @@ exports.sendNotification = functions.firestore
                         .get()
                         .then((userData) => {
                             registrationToken.push(userData.data().token);
+                            registrationToken.forEach((tokens)=>{
+                                console.log(">>>>>>>>>>>>>>>>>>>>", tokens);
+                            });
                             return admin.messaging().sendToDevice(registrationToken, payload)
                                 .then((response) => {
-                                    console.log(response.results[0].error.toString());
-                                    return true;
+                                        console.log(response.results[0].error.toString());
                                 })
                                 .catch((error) => {
                                     return error;
