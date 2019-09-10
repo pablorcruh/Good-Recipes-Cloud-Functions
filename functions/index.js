@@ -23,6 +23,11 @@ exports.sendNotification = functions.firestore
         recipeTitle = docSnapshot.data()['title'];
         recipeDescription = docSnapshot.data()['description'];
         payload = {
+            notification: {
+                title: 'Good Recipe',
+                body: "New Content added",
+                sound: "default"
+            },
             data: {
                 title: `${recipeTitle}`,
                 description: `${recipeDescription}`
@@ -37,18 +42,18 @@ exports.sendNotification = functions.firestore
                 let followerList = list.filter((item)=>{
                     return item !=='start';
                 });
+                registrationToken = [];
                 return followerList.forEach(function(follower) {
                     return db.collection('users/')
                         .doc(follower)
                         .get()
                         .then((userData) => {
                             registrationToken.push(userData.data().token);
-                            registrationToken.forEach((tokens)=>{
-                                console.log(">>>>>>>>>>>>>>>>>>>>", tokens);
-                            });
                             return admin.messaging().sendToDevice(registrationToken, payload)
                                 .then((response) => {
-                                        console.log(response.results[0].error.toString());
+                                    console.log(">>>>>>>>>>>> llega a la función", response)
+                                    //console.log("#########"+response.results[0].error.toString());
+                                    return true;
                                 })
                                 .catch((error) => {
                                     return error;
