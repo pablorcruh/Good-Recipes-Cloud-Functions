@@ -18,7 +18,7 @@ para ello es necesario la creación de un proyecto dentro de la consola de fireb
 Se hace uso de dos colecciones: usuarios y recetas. A continuación 
 describimos la estructura de cada colección.
 
-#### Colección usuarios
+#### Colección Receta
 ```
 { 
    "author":"string",
@@ -31,7 +31,7 @@ describimos la estructura de cada colección.
 }
 
 ```
-#### Colección Recetas
+#### Colección Usuario
 
 ```
 { 
